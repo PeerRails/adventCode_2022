@@ -3,7 +3,7 @@
 class Monkey
   attr_accessor :items
   attr_accessor :operation
-  attr_accessor :divisible
+  attr_accessor :divisor
   attr_accessor :test_passed
   attr_accessor :test_failed
   attr_accessor :inspect_count
@@ -23,7 +23,7 @@ class Monkey
   end
 
   def test(item)
-    operate(item) % @divisible == 0 ? @test_passed : @test_failed
+    operate(item) % @divisor == 0 ? @test_passed : @test_failed
   end
 
   def clear_items
@@ -39,7 +39,6 @@ end
 
 def parse_monkeys(input)
   monkeys = []
-  modulo = 1
 
   input.each do |line|
     case
@@ -52,18 +51,16 @@ def parse_monkeys(input)
       operation = /^*.Operation: new = (?<first>.*) (?<operator>\+|\*) (?<second>.*)$/.match(line)
       monkeys.last.operation = {first: operation[:first], second: operation[:second], operator: operation[:operator]}
     when line.include?("Test")
-      monkeys.last.divisible = line.scan(/\d/).join('').to_i
-      modulo *= monkeys.last.divisible
+      monkeys.last.divisor = line.scan(/\d/).join('').to_i
     when line.include?("true")
       monkeys.last.test_passed = line.scan(/\d/).first.to_i
     when line.include?("false")
       monkeys.last.test_failed = line.scan(/\d/).first.to_i
     end
-    pp monkeys.last.inspect
   end
 
-  monkeys.each do |monkey|
-    monkey.modulo = modulo
+  modulo = monkeys.map{|m| m.divisor}.reduce(1, :lcm)
+  monkeys.each{|m| m.modulo = modulo}
   end
 
   monkeys
@@ -74,7 +71,7 @@ def round(monkeys)
     items = monkey.items
     (0..items.size-1).each do |i|
       worry_level = items.first
-      pp "Monkey #{im}: Item with worry level #{worry_level} increased to #{monkey.operate(worry_level)} and thrown to #{monkey.test(worry_level)}"
+      pp "Monkey #{im}: Item with worry level #{worry_level} is changed to #{monkey.operate(worry_level)} and thrown to monkey #{monkey.test(worry_level)}"
       monkeys[monkey.test(worry_level)].items.push monkey.throw
     end
   end
